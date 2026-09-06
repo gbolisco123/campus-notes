@@ -1,11 +1,13 @@
 // db/init.js
 // Sets up the SQLite database and creates tables if they don't exist yet.
-// Using better-sqlite3 because it's synchronous and dead simple for a small app like this.
+// DATA_DIR points at a persistent volume in production (see server.js) so the
+// database survives redeploys instead of living inside the throwaway container.
 
 const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 
-const db = new DatabaseSync(path.join(__dirname, 'campus-notes.db'));
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+const db = new DatabaseSync(path.join(DATA_DIR, 'campus-notes.db'));
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS courses (

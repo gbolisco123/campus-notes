@@ -6,6 +6,7 @@ const db = require('../db/init');
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 const PAYSTACK_BASE = 'https://api.paystack.co';
+const dataDir = process.env.DATA_DIR || path.join(__dirname, '..');
 
 // POST /api/purchases/initialize
 // Body: { item_id, buyer_email }
@@ -85,7 +86,7 @@ router.get('/download/:reference', (req, res) => {
   const item = db.prepare(`SELECT * FROM items WHERE id = ?`).get(purchase.item_id);
   if (!item) return res.status(404).json({ error: 'Item not found' });
 
-  res.download(path.join(__dirname, '..', 'uploads', item.file_path), item.title);
+  res.download(path.join(dataDir, 'uploads', item.file_path), item.title);
 });
 
 module.exports = router;

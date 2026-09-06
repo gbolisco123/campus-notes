@@ -6,8 +6,10 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../db/init');
 
 // Files land in /uploads with a random name so nobody can guess/enumerate them.
+// DATA_DIR points at a persistent Railway volume in production.
+const dataDir = process.env.DATA_DIR || path.join(__dirname, '..');
 const storage = multer.diskStorage({
-  destination: path.join(__dirname, '..', 'uploads'),
+  destination: path.join(dataDir, 'uploads'),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `${uuidv4()}${ext}`);
