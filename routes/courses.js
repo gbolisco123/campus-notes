@@ -19,9 +19,10 @@ router.get('/', (req, res) => {
 
 // GET /api/courses/:code - a single course plus its items
 router.get('/:code', (req, res) => {
+  const normalizedCode = req.params.code.replace(/\s+/g, '').toUpperCase();
   const course = db
     .prepare(`SELECT * FROM courses WHERE code = ?`)
-    .get(req.params.code.toUpperCase());
+    .get(normalizedCode);
 
   if (!course) return res.status(404).json({ error: 'Course not found' });
 
@@ -37,11 +38,13 @@ router.post('/', (req, res) => {
   const { code, name, department } = req.body;
   if (!code || !name) return res.status(400).json({ error: 'code and name are required' });
 
+  const normalizedCode = code.replace(/\s+/g, '').toUpperCase();
+
   try {
     const result = db
       .prepare(`INSERT INTO courses (code, name, department) VALUES (?, ?, ?)`)
-      .run(code.toUpperCase(), name, department || null);
-    res.status(201).json({ id: result.lastInsertRowid, code, name, department });
+      .run(normalizedCode, name, department || null);
+    res.status(201).json({ id: result.lastInsertRowid, code: normalizedCode, name, department });
   } catch (err) {
     if (/UNIQUE constraint/i.test(err.message)) {
       return res.status(409).json({ error: 'That course code already exists' });

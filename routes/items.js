@@ -53,7 +53,7 @@ router.post('/', upload.single('file'), (req, res) => {
     return res.status(400).json({ error: 'course_code, title, price, and file are required' });
   }
 
-  const course = db.prepare(`SELECT id FROM courses WHERE code = ?`).get(course_code.toUpperCase());
+  const course = db.prepare(`SELECT id FROM courses WHERE code = ?`).get(course_code.replace(/\s+/g, '').toUpperCase());
   if (!course) return res.status(404).json({ error: 'Course not found — create it first' });
 
   const priceInKobo = Math.round(parseFloat(price) * 100);

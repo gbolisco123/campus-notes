@@ -63,7 +63,7 @@
 document.getElementById('upload-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const status = document.getElementById('status');
-  const courseCode = document.getElementById('course_code').value.trim().toUpperCase();
+  const courseCode = document.getElementById('course_code').value.replace(/\s+/g, '').toUpperCase();
   const courseName = document.getElementById('course_name').value.trim();
 
   status.textContent = 'Uploading...';
