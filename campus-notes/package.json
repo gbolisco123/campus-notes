@@ -1,0 +1,20 @@
+{
+  "name": "campus-notes",
+  "version": "1.0.0",
+  "description": "Marketplace for university students to buy and sell notes, past questions, and course material",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5",
+    "axios": "^1.7.7",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^9.0.1"
+  }
+}

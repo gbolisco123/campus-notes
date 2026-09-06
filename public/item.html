@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Notes — Item</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">campus<span>notes</span></div>
+    <nav class="top-links"><a href="upload.html">Sell your notes</a></nav>
+  </div>
+</header>
+
+<main class="catalog" style="min-height:70vh;">
+  <div class="wrap" style="padding-top:40px;">
+    <a href="#" class="back-link" onclick="history.back(); return false;">&larr; Back</a>
+    <div id="item-detail"></div>
+  </div>
+</main>
+
+<script>
+const params = new URLSearchParams(location.search);
+const itemId = params.get('id');
+let currentItem = null;
+
+async function loadItem() {
+  const res = await fetch(`/api/items/${itemId}`);
+  if (!res.ok) {
+    document.getElementById('item-detail').innerHTML = `<div class="empty-state">Item not found.</div>`;
+    return;
+  }
+  currentItem = await res.json();
+
+  document.getElementById('item-detail').innerHTML = `
+    <span class="stamp">${currentItem.course_code}</span>
+    <h2 style="font-family:'Fraunces',serif; margin:10px 0 4px;">${currentItem.title}</h2>
+    <p style="color:var(--ink-soft); margin:0 0 20px;">${currentItem.course_name} &middot; uploaded by ${currentItem.uploader_name}</p>
+    <p style="max-width:60ch; margin-bottom:28px;">${currentItem.description || 'No description provided.'}</p>
+
+    <div class="panel" style="margin:0;">
+      <h2 style="font-size:18px;">&#8358;${(currentItem.price / 100).toLocaleString()}</h2>
+      <div class="field">
+        <label for="email">Your email (for the download link)</label>
+        <input type="email" id="email" placeholder="you@example.com" required>
+      </div>
+      <button class="btn block" onclick="startCheckout()">Pay & Download</button>
+      <p id="status" class="status-msg"></p>
+    </div>
+  `;
+}
+
+async function startCheckout() {
+  const email = document.getElementById('email').value.trim();
+  const status = document.getElementById('status');
+  if (!email) {
+    status.textContent = 'Enter your email first.';
+    status.className = 'status-msg error';
+    return;
+  }
+
+  status.textContent = 'Starting payment...';
+  status.className = 'status-msg';
+
+  try {
+    const res = await fetch('/api/purchases/initialize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item_id: currentItem.id, buyer_email: email }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not start payment');
+    window.location.href = data.authorization_url;
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'status-msg error';
+  }
+}
+
+loadItem();
+</script>
+
+</body>
+</html>

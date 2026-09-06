@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Notes — Sell your notes</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">campus<span>notes</span></div>
+    <nav class="top-links"><a href="index.html">Browse</a></nav>
+  </div>
+</header>
+
+<main class="catalog" style="min-height:80vh;">
+  <div class="wrap" style="padding-top:40px;">
+    <div class="panel">
+      <h2>Sell your notes</h2>
+      <p style="color:var(--ink-soft); font-size:14px; margin-top:-10px;">
+        Upload past questions, summaries, or lecture notes. If the course code doesn't exist yet, it'll be created for you.
+      </p>
+
+      <form id="upload-form">
+        <div class="field">
+          <label for="course_code">Course code</label>
+          <input type="text" id="course_code" placeholder="e.g. MAT102" required>
+        </div>
+        <div class="field">
+          <label for="course_name">Course name (only needed if the code is new)</label>
+          <input type="text" id="course_name" placeholder="e.g. Calculus I">
+        </div>
+        <div class="field">
+          <label for="title">Title</label>
+          <input type="text" id="title" placeholder="e.g. 2024 Past Questions with Solutions" required>
+        </div>
+        <div class="field">
+          <label for="description">Description</label>
+          <textarea id="description" placeholder="What's inside, how many pages, which topics it covers..."></textarea>
+        </div>
+        <div class="field">
+          <label for="uploader_name">Your name</label>
+          <input type="text" id="uploader_name" placeholder="e.g. Gabsonlord">
+        </div>
+        <div class="field">
+          <label for="price">Price (&#8358;)</label>
+          <input type="number" id="price" min="0" step="50" placeholder="e.g. 500" required>
+        </div>
+        <div class="field">
+          <label for="file">File (PDF, Word, or PowerPoint)</label>
+          <input type="file" id="file" accept=".pdf,.doc,.docx,.ppt,.pptx" required>
+        </div>
+        <button type="submit" class="btn block">Upload</button>
+        <p id="status" class="status-msg"></p>
+      </form>
+    </div>
+  </div>
+</main>
+
+<script>
+document.getElementById('upload-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const status = document.getElementById('status');
+  const courseCode = document.getElementById('course_code').value.trim().toUpperCase();
+  const courseName = document.getElementById('course_name').value.trim();
+
+  status.textContent = 'Uploading...';
+  status.className = 'status-msg';
+
+  try {
+    // Make sure the course exists first (create it if a name was given and it doesn't exist yet)
+    const courseCheck = await fetch(`/api/courses/${courseCode}`);
+    if (!courseCheck.ok) {
+      if (!courseName) {
+        status.textContent = `${courseCode} doesn't exist yet — enter a course name to create it.`;
+        status.className = 'status-msg error';
+        return;
+      }
+      const createRes = await fetch('/api/courses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: courseCode, name: courseName }),
+      });
+      if (!createRes.ok) {
+        const err = await createRes.json();
+        status.textContent = err.error || 'Could not create course';
+        status.className = 'status-msg error';
+        return;
+      }
+    }
+
+    const formData = new FormData();
+    formData.append('course_code', courseCode);
+    formData.append('title', document.getElementById('title').value.trim());
+    formData.append('description', document.getElementById('description').value.trim());
+    formData.append('uploader_name', document.getElementById('uploader_name').value.trim() || 'Anonymous');
+    formData.append('price', document.getElementById('price').value);
+    formData.append('file', document.getElementById('file').files[0]);
+
+    const res = await fetch('/api/items', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+
+    status.textContent = 'Uploaded! Redirecting to your course page...';
+    status.className = 'status-msg success';
+    setTimeout(() => { window.location.href = `index.html?course=${courseCode}`; }, 1200);
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'status-msg error';
+  }
+});
+</script>
+
+</body>
+</html>

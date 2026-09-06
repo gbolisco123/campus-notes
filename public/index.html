@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Notes</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">campus<span>notes</span></div>
+    <nav class="top-links">
+      <a href="upload.html">Sell your notes</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>Skip the panic-reading. Find notes from students who already did.</h1>
+    <p>Search by course code and get past questions, summaries, and lecture notes uploaded by students ahead of you.</p>
+    <div class="search-row">
+      <input id="search" type="text" placeholder="Try MAT102, PHY102, CHM101...">
+    </div>
+  </div>
+</section>
+
+<main class="catalog">
+  <div class="wrap">
+    <div id="browse-view">
+      <div class="section-label">Courses</div>
+      <div id="course-grid" class="card-grid"></div>
+    </div>
+
+    <div id="course-view" style="display:none;">
+      <a href="#" class="back-link" onclick="showBrowse(); return false;">&larr; All courses</a>
+      <div id="course-detail"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const grid = document.getElementById('course-grid');
+const searchInput = document.getElementById('search');
+
+async function loadCourses(q = '') {
+  const res = await fetch('/api/courses' + (q ? `?q=${encodeURIComponent(q)}` : ''));
+  const courses = await res.json();
+  renderCourses(courses);
+}
+
+function renderCourses(courses) {
+  if (!courses.length) {
+    grid.innerHTML = `<div class="empty-state">No courses match that search yet. Be the first to <a href="upload.html">upload notes</a> for it.</div>`;
+    return;
+  }
+  grid.innerHTML = courses.map(c => `
+    <a class="card" href="#" onclick="openCourse('${c.code}'); return false;">
+      <span class="stamp">${c.code}</span>
+      <h3>${c.name}</h3>
+      <p class="dept">${c.department || ''}</p>
+    </a>
+  `).join('');
+}
+
+searchInput.addEventListener('input', (e) => loadCourses(e.target.value));
+
+function showBrowse() {
+  document.getElementById('browse-view').style.display = 'block';
+  document.getElementById('course-view').style.display = 'none';
+  history.pushState({}, '', '/');
+}
+
+async function openCourse(code) {
+  const res = await fetch(`/api/courses/${code}`);
+  if (!res.ok) return;
+  const course = await res.json();
+
+  document.getElementById('browse-view').style.display = 'none';
+  document.getElementById('course-view').style.display = 'block';
+  history.pushState({}, '', `/?course=${code}`);
+
+  const detail = document.getElementById('course-detail');
+  detail.innerHTML = `
+    <span class="stamp">${course.code}</span>
+    <h2 style="font-family:'Fraunces',serif; margin:8px 0 24px;">${course.name}</h2>
+    <div class="section-label">${course.items.length} item${course.items.length === 1 ? '' : 's'} available</div>
+    <div id="item-list"></div>
+  `;
+
+  const list = document.getElementById('item-list');
+  if (!course.items.length) {
+    list.innerHTML = `<div class="empty-state">Nothing uploaded for this course yet. <a href="upload.html">Add the first one</a>.</div>`;
+    return;
+  }
+  list.innerHTML = course.items.map(i => `
+    <a class="item-row" href="item.html?id=${i.id}" style="text-decoration:none; color:inherit;">
+      <div class="meta">
+        <h4>${i.title}</h4>
+        <p>by ${i.uploader_name || 'Anonymous'}</p>
+      </div>
+      <div class="price">&#8358;${(i.price / 100).toLocaleString()}</div>
+    </a>
+  `).join('');
+}
+
+// Support deep-linking to /?course=CODE
+const params = new URLSearchParams(location.search);
+if (params.get('course')) {
+  openCourse(params.get('course'));
+} else {
+  loadCourses();
+}
+</script>
+
+</body>
+</html>

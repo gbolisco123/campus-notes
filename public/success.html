@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Notes — Payment</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">campus<span>notes</span></div>
+  </div>
+</header>
+
+<main class="catalog" style="min-height:80vh; display:flex; align-items:center;">
+  <div class="wrap">
+    <div class="panel" id="result-panel">
+      <h2>Confirming your payment...</h2>
+      <p style="color:var(--ink-soft);">Give us a second while we check with Paystack.</p>
+    </div>
+  </div>
+</main>
+
+<script>
+const params = new URLSearchParams(location.search);
+const reference = params.get('reference') || params.get('trxref');
+
+async function verify() {
+  const panel = document.getElementById('result-panel');
+  if (!reference) {
+    panel.innerHTML = `<h2>No payment reference found</h2><p style="color:var(--ink-soft);">Go back and try again.</p>`;
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/purchases/verify/${reference}`);
+    const data = await res.json();
+
+    if (data.status === 'completed') {
+      panel.innerHTML = `
+        <h2>Payment confirmed 🎉</h2>
+        <p style="color:var(--ink-soft); margin-bottom:20px;">Your download is ready.</p>
+        <a class="btn block" href="${data.download_url}">Download now</a>
+      `;
+    } else {
+      panel.innerHTML = `<h2>Payment not completed</h2><p style="color:var(--ink-soft);">If money left your account, contact support with reference: ${reference}</p>`;
+    }
+  } catch (err) {
+    panel.innerHTML = `<h2>Something went wrong</h2><p style="color:var(--ink-soft);">Please refresh this page, or contact support with reference: ${reference}</p>`;
+  }
+}
+
+verify();
+</script>
+
+</body>
+</html>
