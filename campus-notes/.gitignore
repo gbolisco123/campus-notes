@@ -1,5 +1,0 @@
-node_modules/
-.env
-db/campus-notes.db
-db/campus-notes.db-*
-uploads/
