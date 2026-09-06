@@ -83,3 +83,4 @@ Then open **http://localhost:3000** in your browser.
 - Add a rating/report system so bad uploads get flagged.
 - Add student login so people can see their purchase history and re-download without re-paying.
 - Take a cut: currently the full price goes to whoever's Paystack account is connected — if you want a marketplace where the *uploader* gets paid and you take a commission, you'd use Paystack's [Split Payments](https://paystack.com/docs/payments/split-payments/) feature.
+Testing persistence.
