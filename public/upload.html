@@ -18,12 +18,16 @@
 <main class="catalog" style="min-height:80vh;">
   <div class="wrap" style="padding-top:40px;">
     <div class="panel">
-      <h2>Sell your notes</h2>
+      <h2>Upload notes</h2>
       <p style="color:var(--ink-soft); font-size:14px; margin-top:-10px;">
-        Upload past questions, summaries, or lecture notes. If the course code doesn't exist yet, it'll be created for you.
+        This upload form is private — an upload key is required.
       </p>
 
       <form id="upload-form">
+        <div class="field">
+          <label for="admin_key">Upload key</label>
+          <input type="password" id="admin_key" placeholder="Enter your upload key" required>
+        </div>
         <div class="field">
           <label for="course_code">Course code</label>
           <input type="text" id="course_code" placeholder="e.g. MAT102" required>
@@ -63,6 +67,7 @@
 document.getElementById('upload-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const status = document.getElementById('status');
+  const adminKey = document.getElementById('admin_key').value;
   const courseCode = document.getElementById('course_code').value.replace(/\s+/g, '').toUpperCase();
   const courseName = document.getElementById('course_name').value.trim();
 
@@ -81,7 +86,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
       const createRes = await fetch('/api/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: courseCode, name: courseName }),
+        body: JSON.stringify({ code: courseCode, name: courseName, admin_key: adminKey }),
       });
       if (!createRes.ok) {
         const err = await createRes.json();
@@ -92,6 +97,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
     }
 
     const formData = new FormData();
+    formData.append('admin_key', adminKey);
     formData.append('course_code', courseCode);
     formData.append('title', document.getElementById('title').value.trim());
     formData.append('description', document.getElementById('description').value.trim());

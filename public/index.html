@@ -11,9 +11,6 @@
 <header class="top">
   <div class="wrap">
     <div class="brand">campus<span>notes</span></div>
-    <nav class="top-links">
-      <a href="upload.html">Sell your notes</a>
-    </nav>
   </div>
 </header>
 
@@ -53,7 +50,7 @@ async function loadCourses(q = '') {
 
 function renderCourses(courses) {
   if (!courses.length) {
-    grid.innerHTML = `<div class="empty-state">No courses match that search yet. Be the first to <a href="upload.html">upload notes</a> for it.</div>`;
+    grid.innerHTML = `<div class="empty-state">No courses match that search yet.</div>`;
     return;
   }
   grid.innerHTML = courses.map(c => `
@@ -92,7 +89,7 @@ async function openCourse(code) {
 
   const list = document.getElementById('item-list');
   if (!course.items.length) {
-    list.innerHTML = `<div class="empty-state">Nothing uploaded for this course yet. <a href="upload.html">Add the first one</a>.</div>`;
+    list.innerHTML = `<div class="empty-state">Nothing uploaded for this course yet.</div>`;
     return;
   }
   list.innerHTML = course.items.map(i => `

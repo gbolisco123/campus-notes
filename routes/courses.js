@@ -34,9 +34,15 @@ router.get('/:code', (req, res) => {
 });
 
 // POST /api/courses - add a new course (used by the upload flow if the course doesn't exist yet)
+// Protected by the same admin key as uploads, since course creation is only
+// ever needed as part of Gabsonlord's own upload flow.
 router.post('/', (req, res) => {
-  const { code, name, department } = req.body;
+  const { code, name, department, admin_key } = req.body;
   if (!code || !name) return res.status(400).json({ error: 'code and name are required' });
+
+  if (!process.env.ADMIN_UPLOAD_KEY || admin_key !== process.env.ADMIN_UPLOAD_KEY) {
+    return res.status(401).json({ error: 'Incorrect upload key' });
+  }
 
   const normalizedCode = code.replace(/\s+/g, '').toUpperCase();
 

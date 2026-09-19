@@ -29,6 +29,29 @@ const upload = multer({
   },
 });
 
+const fs = require('fs');
+
+// Simple shared-secret gate: only requests carrying the correct admin key can
+// upload. This isn't a full login system, but it stops random visitors from
+// uploading content since only Gabsonlord knows the key.
+function requireAdminKey(req, res, next) {
+  const providedKey = req.body.admin_key || req.headers['x-admin-key'];
+  const fail = (status, message) => {
+    // multer already wrote the file to disk before we got here — clean it up
+    // so a rejected request doesn't leave an orphaned file behind.
+    if (req.file) fs.unlink(req.file.path, () => {});
+    return res.status(status).json({ error: message });
+  };
+  if (!process.env.ADMIN_UPLOAD_KEY) {
+    // If no key is configured on the server, fail closed rather than open.
+    return fail(500, 'Uploads are not configured yet');
+  }
+  if (providedKey !== process.env.ADMIN_UPLOAD_KEY) {
+    return fail(401, 'Incorrect upload key');
+  }
+  next();
+}
+
 // GET /api/items/:id - single item detail (for the item/preview page)
 router.get('/:id', (req, res) => {
   const item = db
@@ -45,8 +68,10 @@ router.get('/:id', (req, res) => {
 });
 
 // POST /api/items - upload a new note/past question for a course
-// Expects multipart/form-data: course_code, title, description, uploader_name, price, file
-router.post('/', upload.single('file'), (req, res) => {
+// Expects multipart/form-data: course_code, title, description, uploader_name, price, file, admin_key
+// multer runs first (it needs to parse the multipart body before req.body.admin_key exists),
+// then requireAdminKey checks the key before we touch the database.
+router.post('/', upload.single('file'), requireAdminKey, (req, res) => {
   const { course_code, title, description, uploader_name, price } = req.body;
 
   if (!course_code || !title || !price || !req.file) {
